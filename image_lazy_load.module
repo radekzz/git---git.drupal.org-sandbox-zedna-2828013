@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * implements hook_menu
+ */
+function image_lazy_load_menu() {
+$items = array();
+  $items['admin/config/image_lazy_load'] = array(
+    'title' => 'Speed performance',
+    'description' => 'Speed performance section',
+    'position' => 'left',
+    'weight' => -100,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  // Need at least one child item before your section will appear.
+  $items['admin/config/image_lazy_load/item'] = array(
+    'title' => 'Image Lazy Load settings',
+    'description' => 'Configure image lazy load setting to speed up your website.',
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('image_lazy_load_admin_form'),
+  );
+
+  return($items);
+
+}
+
+/**
+ * Administration form
+ */
+function image_lazy_load_admin_form($form, &$form_state) {
+
+  $form['image_lazy_load_skip_iframe'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Skip iframes?'),
+    '#description' => t('Skip all iframe elements'),
+    '#default_value' => variable_get('image_lazy_load_skip_iframe', 0),
+  );
+
+  $form['image_lazy_load_skip_parent'] = array(
+    '#title' => t('Skip parent element:'),
+    '#type' => 'textfield',
+    '#description' => t('Skip iframe in parent element (<strong>only css class without dot</strong>)<xmp>
+<div class="parent">
+    <iframe src="http://www.example.com">content</iframe>
+</div>
+</xmp>'),
+    '#default_value' => variable_get('image_lazy_load_skip_parent', ''),
+  );
+
+  $form['image_lazy_load_load_position'] = array(
+    '#title' => t('Load position:'),
+    '#type' => 'textfield',
+    '#element_validate' => array('element_validate_integer'),
+    '#description' => t('Load elements on custom position moved by pixels (e.g. 100, -100)<p>
+          <img src="'.$GLOBALS['base_url'].'/'.drupal_get_path('module', 'image_lazy_load') . '/pixels.png" width="300px"></td>
+          </p>'),
+    '#default_value' => variable_get('image_lazy_load_load_position', ''),
+  );
+
+  return system_settings_form($form);
+
+}
+
+function image_lazy_load_init() {
+
+if (!path_is_admin(current_path())) {
+    $skip_iframe = variable_get('image_lazy_load_skip_iframe', '');
+    $skip_parent = variable_get('image_lazy_load_skip_parent', '');
+    $load_position = variable_get('image_lazy_load_load_position', '');
+    drupal_add_js(array('image_lazy_load' => array(
+        'skip_iframe' => $skip_iframe,
+        'skip_parent' => $skip_parent,
+        'load_position' => $load_position)), array('type' => 'setting'));
+    drupal_add_js(drupal_get_path('module', 'image_lazy_load') . '/image_lazy_load.js');
+}
+}
